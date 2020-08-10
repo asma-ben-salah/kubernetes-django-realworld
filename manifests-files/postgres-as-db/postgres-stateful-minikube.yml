@@ -1,0 +1,90 @@
+kind: PersistentVolume 
+apiVersion: v1
+metadata:
+  name: postgres-pv
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/postgres-pv
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: django-realworld-ns
+  labels:
+    app: django-realworld
+    tier: database
+spec:
+  ports:
+  - port: 5432
+    name: postgres-port
+  clusterIP: None
+  selector:
+    app: django-realworld
+    tier: database
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: django-realworld-ns
+spec:
+  serviceName: "postgres-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: django-realworld
+      tier: database
+  template:
+    metadata:
+      labels:
+        app: django-realworld
+        tier: database
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:latest
+        env:
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: db-credentials
+                key: user
+
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: db-credentials
+                key: password
+
+          - name: POSTGRES_DB
+            value: default
+
+        ports:
+        - containerPort: 5432
+          name: postgres
+        volumeMounts:
+        - name: postgres-db
+          mountPath: /var/lib/postgresql/data
+          subPath: postgres
+
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-db
+      labels:
+        type: local
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: manual
+      
+      volumeName: postgres-pv
+      resources:
+        requests:
+          storage: 2Gi

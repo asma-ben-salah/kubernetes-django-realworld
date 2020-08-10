@@ -1,0 +1,28 @@
+nodes:
+    - address: 1.2.3.4
+      internal_address: 1.2.3.4
+      user: ubuntu
+      role:
+        - controlplane
+        - etcd
+        - worker
+
+    - address: 5.6.7.8
+      internal_address: 5.6.7.8
+      user: ubuntu
+      role:
+        - controlplane
+        - etcd
+        - worker
+
+    - address: 9.10.11.12
+      internal_address: 9.10.11.12
+      user: ubuntu
+      role:
+        - controlplane
+        - etcd
+        - workers
+
+kubernetes_version: v1.17.6-rancher2-1
+
+ssh_agent_auth: true

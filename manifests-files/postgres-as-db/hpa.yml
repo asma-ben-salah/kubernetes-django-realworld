@@ -1,0 +1,17 @@
+# This Kubernetes resource used to make the application automatically scalable depending on the CPU load available across multiple nodes.
+# I set the values to 70% 
+
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: django-realworld-hpa
+  namespace: django-realworld-ns
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: django-realworld-deployment
+
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70

@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: django-realworld-ingress
+  namespace: django-realworld-ns
+  labels:
+    app: django-realworld
+    tier: api
+spec:
+  rules:
+  - host: django-realworld.test.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: django-realworld
+          servicePort: 80

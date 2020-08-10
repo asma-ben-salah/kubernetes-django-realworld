@@ -1,0 +1,82 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: default
+  annotations:
+    storageclass.beta.kubernetes.io/is-default-class: "true"
+    storageclass.kubernetes.io/is-default-class: "true"
+parameters:
+  diskformat: thin
+provisioner: kubernetes.io/vsphere-volume
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: Immediate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-realworld-service
+  namespace: django-realworld-ns
+  labels:
+    app: django-realworld
+spec:
+  ports:
+  - port: 80
+    name: app-port
+  clusterIP: None
+  selector:
+    app: django-realworld
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: django-realworld-app
+  namespace: django-realworld-ns
+spec:
+  selector:
+    matchLabels:
+      app: django-realworld 
+  serviceName: "django-realworld-service"
+  replicas: 3 
+  template:
+    metadata:
+      labels:
+        app: django-realworld 
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: django-realworld-container
+        image: abensalah/django-realworld-example-app:sqlite
+        ports:
+        - containerPort: 80
+          name: api-port
+        volumeMounts:
+        - name: db-file
+          mountPath: /usr/db
+  volumeClaimTemplates:
+  - metadata:
+      name: db-file
+    spec:
+      storageClassName: default
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: django-realworld-ingress
+  namespace: django-realworld-ns
+  labels:
+    app: django-realworld
+    tier: api
+spec:
+  rules:
+  - host: django.test.com
+    http:
+      paths:
+      - path: /api
+        backend:
+          serviceName: django-realworld-service
+          servicePort: 80

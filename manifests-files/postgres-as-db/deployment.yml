@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-realworld-deployment
+  namespace: django-realworld-ns
+  labels:
+    app: django-realworld
+    tier: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: django-realworld
+      tier: api
+  template:
+    metadata:
+      labels:
+        app: django-realworld
+        tier: api
+    spec:
+      containers:
+      - name: django-realworld-api
+        image: abensalah/django-realworld-example-app:postgres
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 200m
+
+        env: # Fetch Postgres information as an environment variable
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: db-credentials
+                key: user
+
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: db-credentials
+                key: password
+
+          - name: POSTGRES_HOST
+            value: postgres-service
+
+        readinessProbe: # Readiness to check DataBase connection
+          httpGet:
+            path: /api/health_check
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5

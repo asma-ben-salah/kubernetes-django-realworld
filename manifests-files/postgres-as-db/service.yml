@@ -1,0 +1,18 @@
+# I only used type: NodePort because I was running on minikube
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-realworld
+  namespace: django-realworld-ns
+  labels:
+    app: django-realworld
+    tier: api
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+  selector:
+    app: django-realworld
+    tier: api
+  type: NodePort # Change it to Cluster IP if you are using RKE 
